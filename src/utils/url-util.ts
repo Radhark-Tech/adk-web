@@ -40,6 +40,14 @@ export class URLUtil {
     return (window as any)['runtimeConfig']?.backendUrl;
   }
 
+  /**
+   * Get the domain URL without any path
+   * @returns {string} Base URL (protocol + hostname + port)
+   */
+  static getDomainApiServerBaseUrl(): string {
+    return (window as any)['runtimeConfig']?.backendDomainUrl;
+  }
+
   static getWSServerUrl(): string {
     let url = this.getApiServerBaseUrl();
     // For adk web, when the api server is not set, use the current host

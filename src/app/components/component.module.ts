@@ -62,6 +62,7 @@ import {JsonEditorComponent} from './json-editor/json-editor.component';
 import {PendingEventDialogComponent} from './pending-event-dialog/pending-event-dialog.component';
 import {DeleteSessionDialogComponent} from './session-tab/delete-session-dialog/delete-session-dialog.component';
 import {SessionTabComponent} from './session-tab/session-tab.component';
+import {UsersTabComponent} from './users-tab/users-tab.component';
 import {StateTabComponent} from './state-tab/state-tab.component';
 import {TraceEventComponent} from './trace-tab/trace-event/trace-event.component';
 import {TraceTabComponent} from './trace-tab/trace-tab.component';
@@ -73,6 +74,7 @@ const COMPONENTS = [
   PendingEventDialogComponent,
   EventTabComponent,
   SessionTabComponent,
+  UsersTabComponent,
   EvalTabComponent,
   NewEvalSetDialogComponentComponent,
   AddEvalSessionDialogComponent,

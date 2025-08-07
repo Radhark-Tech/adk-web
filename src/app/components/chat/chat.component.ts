@@ -41,6 +41,7 @@ import {EventService} from '../../core/services/event.service';
 import {FeatureFlagService} from '../../core/services/feature-flag.service';
 import {SessionService} from '../../core/services/session.service';
 import {TraceService} from '../../core/services/trace.service';
+import {User} from '../../core/services/user.service';
 import {VideoService} from '../../core/services/video.service';
 import {WebSocketService} from '../../core/services/websocket.service';
 import {ResizableDrawerDirective} from '../../directives/resizable-drawer.directive';
@@ -1315,6 +1316,24 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
   protected updateSessionState(session: Session) {
     this.currentSessionState = session.state;
+  }
+
+  /**
+   * Handle user selection from the users tab
+   */
+  protected onUserSelected(user: User) {
+    console.log('User selected:', user);
+    // You can implement specific logic for when a user is selected
+    // For example, you might want to show user details, start a chat with the user, etc.
+  }
+
+  /**
+   * Handle user reload from the users tab
+   */
+  protected onUserReloaded(user: User) {
+    console.log('User reloaded:', user);
+    // You can implement specific logic for when a user is reloaded
+    // For example, you might want to refresh user details, update UI, etc.
   }
 
   onNewSessionClick() {
