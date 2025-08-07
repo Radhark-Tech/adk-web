@@ -66,7 +66,7 @@ export class UsersTabComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error loading users:', error);
-            this.errorMessage = 'Failed to load users. Please try again.';
+            this.errorMessage = 'Error ao carregar usuários. Por favor, tente novamente.';
             this.loading = false;
             this.userList = [];
           }

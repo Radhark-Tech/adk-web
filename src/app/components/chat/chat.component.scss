@@ -24,7 +24,8 @@
 
 .drawer-container {
   height: 100%;
-  background-color: #131314;
+  //background-color: #131314;
+  background-color: #fff;
 }
 
 .generated-image-container {
@@ -82,7 +83,10 @@
   flex: 1;
   min-height: 12%;
   box-shadow: none;
-  background-color: #131314;
+  //background-color: #131314;
+  background-color: #fff;
+  border: 1px solid gray;
+  margin: 8px;
 }
 
 .loading-bar {
@@ -261,7 +265,8 @@
   flex-grow: 1;
 
   textarea {
-    color: white;
+    //color: white;
+    color: #000;
     border: none;
     padding: 10px;
     box-sizing: content-box;
@@ -305,7 +310,8 @@
 }
 
 .side-drawer {
-  background-color: #1b1b1b;
+  //background-color: #1b1b1b;
+  background-color: #f4f4f4;
   color: white;
   border-radius: 0;
 }
@@ -567,7 +573,8 @@ button {
   position: sticky;
   top: 0;
   height: 48px;
-  background: #1b1b1b;
+  //background: #1b1b1b;
+  background: #fff;
   display: flex;
   align-items: center;
   z-index: 10;

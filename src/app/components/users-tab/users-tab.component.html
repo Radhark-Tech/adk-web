@@ -15,7 +15,7 @@
 -->
 
 <div class="users-wrapper">
-  <div class="users-header" style="margin-bottom: 16px;">
+  <div class="users-header" style="margin: 16px 0; display: flex; justify-content: space-between; align-items: center;">
     <div class="search-container">
       <input
         type="text"
@@ -23,21 +23,21 @@
         #searchInput
         (input)="searchUsers(searchInput.value)"
         class="user-search-input"
-        style="width: 100%; padding: 8px 12px; border: 1px solid #5f6368; border-radius: 8px; background-color: #303030; color: #e8eaed; font-size: 14px;"
+        style="width: 100%; padding: 8px 12px; border: 1px solid #5f6368; border-radius: 8px; background-color: #fff; color: #000; font-size: 14px;"
       />
     </div>
     <button
       (click)="refreshUsers()"
       class="refresh-button"
-      style="margin-top: 8px; padding: 8px 16px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;"
+      style="padding: 8px 16px; background: #1b1b1b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;"
     >
-      Refresh Users
+      Atualizar
     </button>
   </div>
 
   @if (loading) {
     <div class="loading-container" style="text-align: center; padding: 20px; color: #9aa0a6; font-style: italic;">
-      <p>Loading users from domain...</p>
+      <p>Carregando usuários...</p>
     </div>
   }
 
@@ -50,7 +50,7 @@
   <div class="users-tab-container" style="margin-top: 16px;">
     @if (userList.length === 0 && !loading && !errorMessage) {
       <div class="no-users" style="text-align: center; padding: 20px; color: #9aa0a6; background-color: #303030; border: 1px solid #5f6368; border-radius: 8px;">
-        No users found
+        Sem usuários encontrados.
       </div>
     } @else {
       @for (user of userList; track user.id) {
@@ -76,21 +76,21 @@
               }
               @if (user.role) {
                 <div class="user-role" style="margin-bottom: 2px;">
-                  Role: {{ user.role }}
+                  Papel: {{ user.role }}
                 </div>
               }
               @if (user.last_login) {
                 <div class="user-last-login" style="margin-bottom: 2px;">
-                  Last login: {{ getFormattedDate(user.last_login) }}
+                  Último login: {{ getFormattedDate(user.last_login) }}
                 </div>
               } @else {
                 <div class="user-last-login" style="margin-bottom: 2px;">
-                  Last login: Never
+                  Último login: Nunca
                 </div>
               }
               @if (user.created_at) {
                 <div class="user-created" style="margin-bottom: 2px;">
-                  Created: {{ getFormattedDate(user.created_at) }}
+                  Criado Em: {{ getFormattedDate(user.created_at) }}
                 </div>
               }
               <!-- Display any additional domain-specific fields -->
