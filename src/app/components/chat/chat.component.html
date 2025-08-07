@@ -34,7 +34,7 @@
     >
   }
   <mat-drawer class="side-drawer" #sideDrawer mode="side" appResizableDrawer>
-    <div style="margin-top: 20px; margin-left: 20px; display: flex">
+    <!-- <div style="margin-top: 20px; margin-left: 20px; display: flex">
       <div style="width: 100%">
         <div class="drawer-header">
           <div class="drawer-logo">
@@ -50,8 +50,8 @@
           >
         </div>
       </div>
-    </div>
-    <div class="app-select-container">
+    </div> -->
+    <!-- <div class="app-select-container">
       <mat-select
         class="app-select"
         (selectionChange)="onAppSelection($event)"
@@ -67,11 +67,11 @@
           <mat-option class="app-name-option" [value]="selectedAppControl.value">{{ selectedAppControl.value }}</mat-option>
         }
       </mat-select>
-    </div>
+    </div> -->
     @if (appName != "" && showSidePanel) {
       <div class="tabs-container">
         <mat-tab-group (selectedTabChange)="handleTabChange($event)">
-          <mat-tab class="tabs-header">
+          <!-- <mat-tab class="tabs-header">
             <ng-template mat-tab-label>
               <span class="tab-label">Trace</span>
             </ng-template>
@@ -98,7 +98,7 @@
               <span class="tab-label">Artifacts</span>
             </ng-template>
             <app-artifact-tab [artifacts]="artifacts"> </app-artifact-tab>
-          </mat-tab>
+          </mat-tab> -->
           <mat-tab>
             <ng-template mat-tab-label>
               <span class="tab-label">Users</span>
@@ -112,7 +112,7 @@
             >
             </app-users-tab>
           </mat-tab>
-          <mat-tab>
+          <!-- <mat-tab>
             <ng-template mat-tab-label>
               <span class="tab-label">Sessions</span>
             </ng-template>
@@ -142,7 +142,7 @@
                 (evalNotInstalledMsg)="handleEvalNotInstalled($event)"
               ></app-eval-tab>
             </mat-tab>
-          }
+          } -->
         </mat-tab-group>
       </div>
     }
@@ -249,10 +249,10 @@
             }
           </div>
         } @else {
-          <div style="display: flex">
+          <!-- <div style="display: flex">
             <div class="toolbar-session-text">Session ID</div>
             <div class="toolbar-session-id">{{ sessionId }}</div>
-          </div>
+          </div> -->
           <div class="toolbar-actions">
             <div class="toolbar-sse-toggle">
               <mat-slide-toggle
