@@ -1,5 +1,4 @@
 /**
- * @license
  * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +14,10 @@
  * limitations under the License.
  */
 
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
+import {RouterOutlet} from '@angular/router';
+import {SessionService} from './core/services/session.service';
+import {IframeCommunicationService} from './core/services/iframe-communication.service';
 
 @Component({
   selector: 'app-root',
@@ -23,4 +25,27 @@ import {Component} from '@angular/core';
   styleUrl: './app.component.scss',
   standalone: false,
 })
-export class AppComponent {}
+export class AppComponent implements OnInit {
+  title = 'agent_framework_web';
+  userId: string = '';
+  appName: string = '';
+  sessionId: string = '';
+
+  constructor(private iframeCommunicationService: IframeCommunicationService) {}
+
+  ngOnInit() {
+    // Subscribe to access token changes if needed
+    this.iframeCommunicationService.accessToken$.subscribe(token => {
+      if (token) {
+        console.log('Access token received in app component:', token);
+        // You can add additional logic here when token is received
+      }
+    });
+
+    // Request access token from parent if we're in an iframe
+    if (window.parent && window.parent !== window) {
+      console.log('App is running in iframe, requesting access token...');
+      this.iframeCommunicationService.requestAccessToken();
+    }
+  }
+}

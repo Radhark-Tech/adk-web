@@ -16,18 +16,18 @@
 
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import {SessionTabComponent} from './session-tab.component';
+import {UsersTabComponent} from './users-tab.component';
 
-describe('SessionTabComponent', () => {
-  let component: SessionTabComponent;
-  let fixture: ComponentFixture<SessionTabComponent>;
+describe('UsersTabComponent', () => {
+  let component: UsersTabComponent;
+  let fixture: ComponentFixture<UsersTabComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SessionTabComponent],
+      imports: [UsersTabComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SessionTabComponent);
+    fixture = TestBed.createComponent(UsersTabComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

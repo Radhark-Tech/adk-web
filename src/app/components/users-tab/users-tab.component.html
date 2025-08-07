@@ -1,0 +1,110 @@
+<!--
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<div class="users-wrapper">
+  <div class="users-header" style="margin-bottom: 16px;">
+    <div class="search-container">
+      <input
+        type="text"
+        placeholder="Search users..."
+        #searchInput
+        (input)="searchUsers(searchInput.value)"
+        class="user-search-input"
+        style="width: 100%; padding: 8px 12px; border: 1px solid #5f6368; border-radius: 8px; background-color: #303030; color: #e8eaed; font-size: 14px;"
+      />
+    </div>
+    <button
+      (click)="refreshUsers()"
+      class="refresh-button"
+      style="margin-top: 8px; padding: 8px 16px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;"
+    >
+      Refresh Users
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="loading-container" style="text-align: center; padding: 20px; color: #9aa0a6; font-style: italic;">
+      <p>Loading users from domain...</p>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="error-container" style="color: #f28b82; padding: 16px; background-color: #3c1f1f; border: 1px solid #5f3838; border-radius: 8px; margin-bottom: 16px;">
+      {{ errorMessage }}
+    </div>
+  }
+  
+  <div class="users-tab-container" style="margin-top: 16px;">
+    @if (userList.length === 0 && !loading && !errorMessage) {
+      <div class="no-users" style="text-align: center; padding: 20px; color: #9aa0a6; background-color: #303030; border: 1px solid #5f6368; border-radius: 8px;">
+        No users found
+      </div>
+    } @else {
+      @for (user of userList; track user.id) {
+        <div
+          (click)="selectUser(user)"
+          [ngClass]="user.id === selectedUserId ? 'user-item current': 'user-item'"
+          style="padding: 12px; border: 1px solid #5f6368; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s ease; background-color: #303030;"
+          [style.background-color]="user.id === selectedUserId ? '#004a77' : '#303030'"
+          [style.border-color]="user.id === selectedUserId ? '#4285f4' : '#5f6368'"
+        >
+          <div class="user-info">
+            <div class="user-name" style="color: #e8eaed; font-family: 'Google Sans', sans-serif; font-size: 16px; font-weight: 500; line-height: 20px; margin-bottom: 4px;">
+              {{ user.name || 'Unnamed User' }}
+            </div>
+            <div class="user-email" style="color: #9aa0a6; font-family: Roboto; font-size: 14px; font-weight: 400; line-height: 18px; margin-bottom: 8px;">
+              {{ user.email || 'No email provided' }}
+            </div>
+            <div class="user-details" style="color: #9aa0a6; font-family: Roboto; font-size: 12px; font-weight: 400; line-height: 16px; letter-spacing: 0.3px;">
+              @if (user.status) {
+                <div class="user-status" style="margin-bottom: 2px;">
+                  Status: {{ user.status }}
+                </div>
+              }
+              @if (user.role) {
+                <div class="user-role" style="margin-bottom: 2px;">
+                  Role: {{ user.role }}
+                </div>
+              }
+              @if (user.last_login) {
+                <div class="user-last-login" style="margin-bottom: 2px;">
+                  Last login: {{ getFormattedDate(user.last_login) }}
+                </div>
+              } @else {
+                <div class="user-last-login" style="margin-bottom: 2px;">
+                  Last login: Never
+                </div>
+              }
+              @if (user.created_at) {
+                <div class="user-created" style="margin-bottom: 2px;">
+                  Created: {{ getFormattedDate(user.created_at) }}
+                </div>
+              }
+              <!-- Display any additional domain-specific fields -->
+              @for (field of user | keyvalue; track field.key) {
+                @if (!['id', 'name', 'email', 'status', 'role', 'last_login', 'created_at'].includes(field.key) && field.value) {
+                  <div class="user-custom-field" style="margin-bottom: 2px;">
+                    {{ field.key }}: {{ field.value }}
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

@@ -101,6 +101,19 @@
           </mat-tab>
           <mat-tab>
             <ng-template mat-tab-label>
+              <span class="tab-label">Users</span>
+            </ng-template>
+            <app-users-tab
+              [userId]="userId"
+              [appName]="appName"
+              [sessionId]="sessionId"
+              (userSelected)="onUserSelected($event)"
+              (userReloaded)="onUserReloaded($event)"
+            >
+            </app-users-tab>
+          </mat-tab>
+          <mat-tab>
+            <ng-template mat-tab-label>
               <span class="tab-label">Sessions</span>
             </ng-template>
             <app-session-tab

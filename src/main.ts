@@ -18,6 +18,36 @@
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {AppModule} from './app/app.module';
 
+// Add the message listener before bootstrapping Angular
+window.addEventListener("message", (event) => {
+  // ✅ Validate origin
+  const allowedOrigins = [
+    "https://portal.carreiramedica.pucpr.br",
+    "http://localhost:3000", // Parent app in development
+  ];
+  
+  if (!allowedOrigins.includes(event.origin)) {
+    console.warn('Message from unauthorized origin:', event.origin);
+    return;
+  }
+
+  const { accessToken } = event.data;
+  if (accessToken) {
+    console.log("Received access token in iframe:", accessToken);
+    
+    // Store the token for use throughout the app
+    localStorage.setItem('domain_access_token', accessToken);
+    
+    // Dispatch a custom event to notify Angular components
+    window.dispatchEvent(new CustomEvent('accessTokenReceived', { 
+      detail: { accessToken } 
+    }));
+    
+    // Optional: Send acknowledgment
+    window.parent.postMessage({ status: "token-received" }, event.origin);
+  }
+});
+
 fetch('./assets/config/runtime-config.json')
   .then((response) => response.json())
   .then((config) => {
@@ -26,7 +56,3 @@ fetch('./assets/config/runtime-config.json')
       .bootstrapModule(AppModule)
       .catch((err) => console.error(err));
   });
-
-platformBrowserDynamic()
-  .bootstrapModule(AppModule)
-  .catch((err) => console.error(err));
