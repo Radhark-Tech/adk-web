@@ -336,13 +336,14 @@
         <div #autoScroll class="chat-messages">
           <div #videoContainer></div>
           @for (message of messages; track message; let i = $index) {
+            @if (!message.functionCall && !message.functionResponse) {
             <div
               [ngClass]="{
                 'user-message': message.role === 'user',
                 'bot-message': message.role === 'bot'
               }"
             >
-              @if (message.role === "bot" && (!message.functionCall && !message.functionResponse)) {
+              @if (message.role === "bot") {
                 <button
                   mat-mini-fab
                   (click)="clickEvent(i)"
@@ -645,6 +646,7 @@
                 </button>
               }
             </div>
+          }
           }
         </div>
       }
