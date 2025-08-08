@@ -342,7 +342,7 @@
                 'bot-message': message.role === 'bot'
               }"
             >
-              @if (message.role === "bot") {
+              @if (message.role === "bot" && (!message.functionCall && !message.functionResponse)) {
                 <button
                   mat-mini-fab
                   (click)="clickEvent(i)"
@@ -571,7 +571,7 @@
                   }
                 </mat-card>
               }
-              @if (message.functionCall) {
+              <!-- @if (message.functionCall) {
                 <button
                   mat-stroked-button
                   [ngClass]="{'function-event-button-highlight': shouldMessageHighlighted(i)}"
@@ -592,7 +592,7 @@
                   <mat-icon>check</mat-icon>
                   {{ message.functionResponse.name }}
                 </button>
-              }
+              } -->
               <div
                 [ngClass]="{
                   'eval-pass': message.evalStatus === 1,
