@@ -106,6 +106,37 @@ export class AgentService {
     });
   }
 
+  customRun(req: AgentRunRequest) {
+    const url = this.apiServerDomain + `/custom_run`;
+    this.isLoading.next(true);
+
+    return new Observable<string>((observer) => {
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/plain',
+        },
+        body: JSON.stringify(req),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.text();
+        })
+        .then((text) => {
+          this.isLoading.next(false);
+          observer.next(text);
+          observer.complete();
+        })
+        .catch((error) => {
+          this.isLoading.next(false);
+          observer.error(error);
+        });
+    });
+  }
+
   listApps(): Observable<string[]> {
     if (this.apiServerDomain != undefined) {
       const url = this.apiServerDomain + `/list-apps?relative_path=./`;

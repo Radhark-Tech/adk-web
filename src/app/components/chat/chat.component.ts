@@ -123,6 +123,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   artifacts: any[] = [];
   userInput: string = '';
   userEditEvalCaseMessage: string = '';
+  user: User | null = null;
   userId = 'user';
   appName = '';
   sessionId = ``;
@@ -429,50 +430,97 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       streaming: this.useSse,
       stateDelta: this.updatedSessionState(),
+      doctor_id: this.user ? this.user.id : undefined,
     };
     this.selectedFiles = [];
     let index = this.eventMessageIndexArray.length - 1;
     this.streamingTextMessage = null;
-    this.agentService.runSse(req).subscribe({
-      next: async (chunk) => {
-        if (chunk.startsWith('{"error"')) {
-          this.openSnackBar(chunk, 'OK');
-          return;
-        }
-        const chunkJson = JSON.parse(chunk);
-        if (chunkJson.error) {
-          this.openSnackBar(chunkJson.error, 'OK');
-          return;
-        }
-        if (chunkJson.content) {
-          for (let part of chunkJson.content.parts) {
-            index += 1;
-            this.processPart(chunkJson, part, index);
-            this.traceService.setEventData(this.eventData);
-          }
-        } else if (chunkJson.errorMessage) {
-          this.processErrorMessage(chunkJson, index)
-        }
+
+    // this.agentService.runSse(req).subscribe({
+    //   next: async (chunk) => {
+    //     if (chunk.startsWith('{"error"')) {
+    //       this.openSnackBar(chunk, 'OK');
+    //       return;
+    //     }
+    //     const chunkJson = JSON.parse(chunk);
+    //     if (chunkJson.error) {
+    //       this.openSnackBar(chunkJson.error, 'OK');
+    //       return;
+    //     }
+    //     if (chunkJson.content) {
+    //       for (let part of chunkJson.content.parts) {
+    //         index += 1;
+    //         this.processPart(chunkJson, part, index);
+    //         this.traceService.setEventData(this.eventData);
+    //       }
+    //     } else if (chunkJson.errorMessage) {
+    //       this.processErrorMessage(chunkJson, index)
+    //     }
+    //     this.changeDetectorRef.detectChanges();
+    //   },
+    //   error: (err) => console.error('SSE error:', err),
+    //   complete: () => {
+    //     this.streamingTextMessage = null;
+    //     this.sessionTab.reloadSession(this.sessionId);
+    //     this.eventService.getTrace(this.sessionId)
+    //         .pipe(catchError((error) => {
+    //           if (error.status === 404) {
+    //             return of(null);
+    //           }
+    //           return of([]);
+    //         }))
+    //         .subscribe(res => {
+    //           this.traceData = res;
+    //           this.changeDetectorRef.detectChanges();
+    //         });
+    //     this.traceService.setMessages(this.messages);
+    //   },
+    // });
+
+    this.agentService.customRun(req).subscribe({
+  next: (responseText) => {
+    if (!responseText || typeof responseText !== 'string') {
+      this.openSnackBar('Resposta inválida do servidor.', 'OK');
+      return;
+    }
+
+    const chunkJson = {
+      text: responseText,   // novo formato direto
+      thought: false        // opcional, se você usa para estilo
+    };
+
+    index += 1;
+    this.processPart(chunkJson, responseText, index);
+    this.traceService.setEventData(this.eventData);
+    this.changeDetectorRef.detectChanges();
+  },
+
+  error: (err) => {
+    console.error('Erro ao executar customRun:', err);
+    this.openSnackBar('Erro ao executar a requisição.', 'OK');
+  },
+
+  complete: () => {
+    this.streamingTextMessage = null;
+    this.sessionTab.reloadSession(this.sessionId);
+
+    this.eventService.getTrace(this.sessionId)
+      .pipe(
+        catchError((error) => {
+          if (error.status === 404) return of(null);
+          return of([]);
+        })
+      )
+      .subscribe(res => {
+        this.traceData = res;
         this.changeDetectorRef.detectChanges();
-      },
-      error: (err) => console.error('SSE error:', err),
-      complete: () => {
-        this.streamingTextMessage = null;
-        this.sessionTab.reloadSession(this.sessionId);
-        this.eventService.getTrace(this.sessionId)
-            .pipe(catchError((error) => {
-              if (error.status === 404) {
-                return of(null);
-              }
-              return of([]);
-            }))
-            .subscribe(res => {
-              this.traceData = res;
-              this.changeDetectorRef.detectChanges();
-            });
-        this.traceService.setMessages(this.messages);
-      },
-    });
+      });
+
+    this.traceService.setMessages(this.messages);
+  }
+});
+
+
     // Clear input
     this.userInput = '';
     this.updatedSessionState.set(null);
@@ -1323,8 +1371,9 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   protected onUserSelected(user: User) {
     console.log('User selected:', user);
-    // You can implement specific logic for when a user is selected
-    // For example, you might want to show user details, start a chat with the user, etc.
+    if (user && user.id) {
+      this.user = user;
+    }
   }
 
   /**

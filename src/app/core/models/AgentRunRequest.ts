@@ -17,10 +17,11 @@
 
 export interface AgentRunRequest {
   appName: string;
-  userId: string;
+  userId: string; // dynamically updated when user selected
   sessionId: string;
   newMessage: any;
   functionCallEventId?: string;
   streaming?: boolean;
   stateDelta?: any;
+  doctor_id?: string; // optional, used for specific user context
 }

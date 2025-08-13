@@ -54,8 +54,8 @@ export class UsersTabComponent implements OnInit {
                 page: 1,
                 page_size: 50,
                 // order_by: 'created_at',
-                direction: 'desc',
-                last_login: true // Include last login information
+                // direction: 'desc',
+                // last_login: true // Include last login information
               });
             })
         )
@@ -108,7 +108,7 @@ export class UsersTabComponent implements OnInit {
       q: query,
       order_by: 'created_at',
       direction: 'desc',
-      last_login: true
+      // last_login: true
     }).subscribe({
       next: (response) => {
         this.userList = response.items || [];
