@@ -36,7 +36,17 @@
   <mat-drawer class="side-drawer" #sideDrawer mode="side" appResizableDrawer>
     @if (appName != '' && showSidePanel) {
       <div class="user-section">
-        <h3 class="section-title">Users</h3>
+        <div class="search-container">
+          <div class="search-input-wrapper">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input 
+              type="text" 
+              class="search-input" 
+              placeholder="Busca"
+              disabled
+            />
+          </div>
+        </div>
         <app-users-tab
           [userId]="userId"
           [appName]="appName"
@@ -46,7 +56,7 @@
         ></app-users-tab>
       </div>
     }
-    <div class="resize-handler"></div>
+    <!-- <div class="resize-handler"></div> -->
   </mat-drawer>
   <div class="chat-container">
     @if (appName != "") {
@@ -107,7 +117,7 @@
             <div class="toolbar-session-id">{{ sessionId }}</div>
           </div> -->
           <div class="toolbar-actions">
-            <div class="toolbar-sse-toggle">
+            <!-- <div class="toolbar-sse-toggle">
               <mat-slide-toggle
                 class="example-margin"
                 [checked]="enableSseIndicator()"
@@ -115,30 +125,30 @@
               >
                 Token Streaming
               </mat-slide-toggle>
-            </div>
-            <mat-divider
+            </div> -->
+            <!-- <mat-divider
               [vertical]="true"
               style="margin-left: 8px; margin-right: 8px; height: 22px"
-            ></mat-divider>
+            ></mat-divider> -->
             <div style="display: flex; align-items: center">
-              <div (click)="onNewSessionClick()" class="toolbar-new-sesison">
+              <!-- <div (click)="onNewSessionClick()" class="toolbar-new-sesison">
                 <mat-icon>add</mat-icon>
                 Nova Sessão
-              </div>
-              <span
+              </div> -->
+              <!-- <span
                 class="material-symbols-outlined toolbar-icon"
                 matTooltip="Deletar sessão atual"
                 (click)="deleteSession(sessionId)"
               >
                 delete
-              </span>
-              <span
+              </span> -->
+              <!-- <span
                 class="material-symbols-outlined toolbar-icon"
                 matTooltip="Exportar sessão atual"
                 (click)="exportSession()"
               >
                 download
-              </span>
+              </span> -->
               @if (importSessionEnabledObs | async) {
                 <span class="material-symbols-outlined toolbar-icon"
                   matTooltip="Import session"
@@ -280,14 +290,24 @@
                             </div>
                           </div>
                         } @else {
-                          <markdown
-                            class="message-text"
-                            [data]="message.text"
-                            [ngStyle]="{
-                              'font-style': message.thought ? 'italic' : 'normal',
-                              color: message.thought ? '#9aa0a6' : 'white'
-                            }"
-                          ></markdown>
+                          @if (customRunLoading() && message.role === 'bot' && message === messages[messages.length - 1]) {
+                            <div class="loading-indicator">
+                              <div class="loading-dots">
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                              </div>
+                            </div>
+                          } @else {
+                            <markdown
+                              class="message-text"
+                              [data]="message.text"
+                              [ngStyle]="{
+                                'font-style': message.thought ? 'italic' : 'normal',
+                                color: message.thought ? '#9aa0a6' : 'white'
+                              }"
+                            ></markdown>
+                          }
                         }
                       }
                     </div>
@@ -502,6 +522,8 @@
           }
           }
         </div>
+        
+
       }
       @if (appName != "" && isChatMode()) {
         <div class="chat-input">
@@ -552,34 +574,37 @@
               cdkAutosizeMaxRows="10"
               [(ngModel)]="userInput"
               (keydown.enter)="sendMessage($event)"
-              placeholder="Escreva uma mensagem..."
+              placeholder="Envie uma mensagem..."
               style="caret-color: black;"
             ></textarea>
+            
             <div class="chat-input-actions">
-              <div>
                 <button
                 mat-icon-button
                 (click)="fileInput.click()"
                 class="function-event-button"
-                matTooltip="Envie um arquivo"
                 >
-                  <mat-icon>attach_file</mat-icon>
+                  <mat-icon style="color: #919191;">attach_file</mat-icon>
                 </button>
-                <button
+
+                <button mat-icon-button class="send-button" (click)="sendMessage($event)">
+                  <mat-icon style="color: white">arrow_upward</mat-icon>
+                </button>
+                <!-- <button
                   mat-icon-button
                   [matMenuTriggerFor]="moreMenu"
                   class="function-event-button"
                   matTooltip="Mais opções"
                 >
                   <mat-icon>more_vert</mat-icon>
-                </button>
-                <mat-menu #moreMenu="matMenu">
+                </button> -->
+                <!-- <mat-menu #moreMenu="matMenu">
                   <span mat-menu-item (click)="updateState()">
                     Update state
                   </span>
-                </mat-menu>
-              </div>
-              <div>
+                </mat-menu> -->
+              
+              <!-- <div>
                 <button
                   mat-icon-button
                   matSuffix
@@ -602,7 +627,7 @@
                 >
                   <mat-icon>videocam</mat-icon>
                 </button>
-              </div>
+              </div> -->
             </div>
           </mat-form-field>
         </div>
@@ -611,7 +636,7 @@
 
     @if (bottomPanelVisible) {
       <div #bottomPanel class="trace-detail-container" appResizableBottomPanel>
-        <div class="bottom-resize-handler"></div>
+        <!-- <div class="bottom-resize-handler"></div> -->
         <app-trace-event
           [userId]="userId"
           [appName]="appName"
