@@ -30,6 +30,7 @@ export class UsersTabComponent implements OnInit {
   @Input() userId: string = '';
   @Input() appName: string = '';
   @Input() sessionId: string = '';
+  @Input() onNewSessionClick: (() => void) | undefined;
 
   @Output() readonly userSelected = new EventEmitter<User>();
   @Output() readonly userReloaded = new EventEmitter<User>();

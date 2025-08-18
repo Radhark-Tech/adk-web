@@ -28,6 +28,13 @@
   }
   
   <div class="users-tab-container">
+    @if (onNewSessionClick) {
+      <div (click)="onNewSessionClick()" class="toolbar-new-session">
+        <mat-icon>add</mat-icon>
+        Nova Sessão
+      </div>
+    }
+
     <p class="users-tab-title">Carteira</p>
 
     @if (userList.length === 0 && !loading && !errorMessage) {

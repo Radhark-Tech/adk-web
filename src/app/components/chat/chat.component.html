@@ -51,6 +51,7 @@
           [userId]="userId"
           [appName]="appName"
           [sessionId]="sessionId"
+          [onNewSessionClick]="() => onNewSessionClick()"
           (userSelected)="onUserSelected($event)"
           (userReloaded)="onUserReloaded($event)"
         ></app-users-tab>

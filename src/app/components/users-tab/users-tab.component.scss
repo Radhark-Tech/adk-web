@@ -25,6 +25,32 @@
   margin-top: 16px;
 }
 
+.toolbar-new-session {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+  color: #495057;
+  font-weight: 500;
+
+  &:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+  }
+
+  mat-icon {
+    margin-right: 8px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .users-tab-title {
   font-size: 12px;
   font-weight: 600;
