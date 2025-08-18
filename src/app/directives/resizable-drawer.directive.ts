@@ -45,10 +45,14 @@ export class ResizableDrawerDirective implements AfterViewInit {
   ngAfterViewInit() {
     this.resizeHandle =
         document.getElementsByClassName('resize-handler')[0] as HTMLElement;
-    this.renderer.listen(
-        this.resizeHandle, 'mousedown',
-        (event) => this.onResizeHandleMouseDown(event));
-    document.documentElement.style.setProperty('--side-drawer-width', '570px');
+    
+    if (this.resizeHandle) {
+      this.renderer.listen(
+          this.resizeHandle, 'mousedown',
+          (event) => this.onResizeHandleMouseDown(event));
+    }
+    
+    document.documentElement.style.setProperty('--side-drawer-width', '400px');
 
     this.renderer.setStyle(
         this.el.nativeElement, 'width', 'var(--side-drawer-width)');

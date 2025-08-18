@@ -16,7 +16,7 @@
  */
 
 import {HttpClient} from '@angular/common/http';
-import {Injectable, NgZone} from '@angular/core';
+import {Injectable, NgZone, signal, computed} from '@angular/core';
 import {BehaviorSubject, Observable, of} from 'rxjs';
 import {URLUtil} from '../../../utils/url-util';
 import {AgentRunRequest} from '../models/AgentRunRequest';
@@ -29,6 +29,19 @@ export class AgentService {
   private _currentApp = new BehaviorSubject<string>('');
   currentApp = this._currentApp.asObservable();
   private isLoading = new BehaviorSubject<boolean>(false);
+
+  // Signals para customRun
+  private customRunResponseSignal = signal<string>('');
+  private customRunLoadingSignal = signal<boolean>(false);
+  private customRunErrorSignal = signal<string | null>(null);
+
+  // Readonly signals para componentes
+  customRunResponse = this.customRunResponseSignal.asReadonly();
+  customRunLoading = this.customRunLoadingSignal.asReadonly();
+  customRunError = this.customRunErrorSignal.asReadonly();
+
+  // Computed signal para verificar se há resposta
+  hasCustomRunResponse = computed(() => this.customRunResponseSignal().length > 0);
 
   constructor(
     private http: HttpClient,
@@ -108,8 +121,13 @@ export class AgentService {
 
   customRun(req: AgentRunRequest) {
     const url = this.apiServerDomain + `/custom_run`;
-    this.isLoading.next(true);
-
+    
+    // Limpar signals automaticamente ao iniciar nova requisição
+    this.clearCustomRunSignals();
+    
+    // Definir loading como true ao iniciar a requisição
+    this.customRunLoadingSignal.set(true);
+    
     return new Observable<string>((observer) => {
       fetch(url, {
         method: 'POST',
@@ -126,15 +144,24 @@ export class AgentService {
           return response.text();
         })
         .then((text) => {
-          this.isLoading.next(false);
+          this.customRunLoadingSignal.set(false);
+          this.customRunResponseSignal.set(text);
           observer.next(text);
           observer.complete();
         })
         .catch((error) => {
-          this.isLoading.next(false);
+          this.customRunLoadingSignal.set(false);
+          this.customRunErrorSignal.set(error.message);
           observer.error(error);
         });
     });
+  }
+
+  // Método para limpar os signals do customRun
+  clearCustomRunSignals() {
+    this.customRunResponseSignal.set('');
+    this.customRunErrorSignal.set(null);
+    this.customRunLoadingSignal.set(false);
   }
 
   listApps(): Observable<string[]> {

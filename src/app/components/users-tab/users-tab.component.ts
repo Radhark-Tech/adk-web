@@ -97,6 +97,27 @@ export class UsersTabComponent implements OnInit {
     }
   }
 
+  protected getUserInitial(name: string | undefined): string {
+    if (!name || name.trim() === '') {
+      return '?';
+    }
+    
+    const trimmedName = name.trim();
+    const spaceIndex = trimmedName.indexOf(' ');
+    
+    if (spaceIndex === -1 || spaceIndex === trimmedName.length - 1) {
+      return trimmedName.charAt(0).toUpperCase();
+    }
+    
+    const firstCharAfterSpace = trimmedName.charAt(spaceIndex + 1);
+    
+    if (/[a-zA-Z]/.test(firstCharAfterSpace)) {
+      return firstCharAfterSpace.toUpperCase();
+    }
+    
+    return firstCharAfterSpace;
+  }
+
   refreshUsers() {
     this.refreshUsersSubject.next();
   }
@@ -117,7 +138,7 @@ export class UsersTabComponent implements OnInit {
         console.error('Error searching users:', error);
         this.errorMessage = 'Failed to search users. Please try again.';
         this.userList = [];
-      }
+      },
     });
   }
 }
