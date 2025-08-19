@@ -17,7 +17,7 @@
 
 import {DOCUMENT, Location} from '@angular/common';
 import {HttpErrorResponse} from '@angular/common/http';
-import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, Inject, inject, OnDestroy, OnInit, Renderer2, signal, ViewChild, WritableSignal} from '@angular/core';
+import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, ElementRef, HostListener, Inject, inject, OnDestroy, OnInit, Renderer2, signal, ViewChild, WritableSignal} from '@angular/core';
 import {FormControl} from '@angular/forms';
 import {MatDialog, MatDialogModule} from '@angular/material/dialog';
 import {MatPaginatorIntl} from '@angular/material/paginator';
@@ -140,6 +140,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   currentSessionState = {};
   root_agent = ROOT_AGENT;
   updatedSessionState = signal(null);
+  newSessionTrigger = signal(0);
   private readonly messagesSubject = new BehaviorSubject<any[]>([]);
   private readonly streamingTextMessageSubject =
     new BehaviorSubject<any | null>(null);
@@ -249,7 +250,14 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       private location: Location,
       private renderer: Renderer2,
       @Inject(DOCUMENT) private document: Document,
-  ) {}
+  ) {
+    effect(() => {
+      const trigger = this.newSessionTrigger();
+      if (trigger > 0) {
+        this.performNewSession();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.syncSelectedAppFromUrl();
@@ -1460,7 +1468,11 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     // For example, you might want to refresh user details, update UI, etc.
   }
 
-  onNewSessionClick() {
+  onNewSessionClick = () => {
+    this.newSessionTrigger.set(this.newSessionTrigger() + 1);
+  }
+
+  private performNewSession() {
     this.createSession();
     this.eventData.clear();
     this.eventMessageIndexArray = [];

@@ -85,6 +85,12 @@ export class UsersTabComponent implements OnInit {
     this.userSelected.emit(user);
   }
 
+  handleNewSessionClick() {
+    if (this.onNewSessionClick) {
+      this.onNewSessionClick();
+    }
+  }
+
   protected getFormattedDate(dateString: string | undefined): string {
     if (!dateString) {
       return 'Never';
