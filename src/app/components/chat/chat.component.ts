@@ -19,7 +19,7 @@ import {DOCUMENT, Location} from '@angular/common';
 import {HttpErrorResponse} from '@angular/common/http';
 import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, ElementRef, HostListener, Inject, inject, OnDestroy, OnInit, Renderer2, signal, ViewChild, WritableSignal} from '@angular/core';
 import {FormControl} from '@angular/forms';
-import {MatDialog, MatDialogModule} from '@angular/material/dialog';
+import {MatDialog} from '@angular/material/dialog';
 import {MatPaginatorIntl} from '@angular/material/paginator';
 import {MatDrawer} from '@angular/material/sidenav';
 import {MatSnackBar} from '@angular/material/snack-bar';
@@ -259,7 +259,8 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
+    this.enableSseIndicator.set(this.useSse);
     this.syncSelectedAppFromUrl();
     this.updateSelectedAppUrl();
 
@@ -293,9 +294,11 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
       if (isLoading) {
         if (!lastMessage?.isLoading && !this.streamingTextMessage) {
-          this.messages.push({ role: 'bot', isLoading: true });
+          const loadingMessage = { role: 'bot', isLoading: true };
+          this.messages.push(loadingMessage);
           this.messagesSubject.next(this.messages);
-        }
+          this.changeDetectorRef.detectChanges();
+        } 
       } else if (lastMessage?.isLoading && !isModelThinking) {
         this.messages.pop();
         this.messagesSubject.next(this.messages);

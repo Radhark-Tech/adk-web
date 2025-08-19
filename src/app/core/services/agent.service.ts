@@ -125,7 +125,8 @@ export class AgentService {
     // Limpar signals automaticamente ao iniciar nova requisição
     this.clearCustomRunSignals();
     
-    // Definir loading como true ao iniciar a requisição
+    // Definir loading como true ao iniciar a requisição (tanto global quanto local)
+    this.isLoading.next(true);
     this.customRunLoadingSignal.set(true);
     
     return new Observable<string>((observer) => {
@@ -144,12 +145,16 @@ export class AgentService {
           return response.text();
         })
         .then((text) => {
+          // Definir loading como false ao completar (tanto global quanto local)
+          this.isLoading.next(false);
           this.customRunLoadingSignal.set(false);
           this.customRunResponseSignal.set(text);
           observer.next(text);
           observer.complete();
         })
         .catch((error) => {
+          // Definir loading como false em caso de erro (tanto global quanto local)
+          this.isLoading.next(false);
           this.customRunLoadingSignal.set(false);
           this.customRunErrorSignal.set(error.message);
           observer.error(error);

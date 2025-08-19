@@ -291,24 +291,14 @@
                             </div>
                           </div>
                         } @else {
-                          @if (customRunLoading() && message.role === 'bot' && message === messages[messages.length - 1]) {
-                            <div class="loading-indicator">
-                              <div class="loading-dots">
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                              </div>
-                            </div>
-                          } @else {
-                            <markdown
-                              class="message-text"
-                              [data]="message.text"
-                              [ngStyle]="{
-                                'font-style': message.thought ? 'italic' : 'normal',
-                                color: message.thought ? '#9aa0a6' : 'white'
-                              }"
-                            ></markdown>
-                          }
+                          <markdown
+                            class="message-text"
+                            [data]="message.text"
+                            [ngStyle]="{
+                              'font-style': message.thought ? 'italic' : 'normal',
+                              color: message.thought ? '#9aa0a6' : 'white'
+                            }"
+                          ></markdown>
                         }
                       }
                     </div>
