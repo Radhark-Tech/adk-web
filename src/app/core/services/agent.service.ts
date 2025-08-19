@@ -17,7 +17,7 @@
 
 import {HttpClient} from '@angular/common/http';
 import {Injectable, NgZone, signal, computed} from '@angular/core';
-import {BehaviorSubject, Observable, of} from 'rxjs';
+import {BehaviorSubject, Observable} from 'rxjs';
 import {URLUtil} from '../../../utils/url-util';
 import {AgentRunRequest} from '../models/AgentRunRequest';
 
