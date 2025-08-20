@@ -17,9 +17,9 @@
 
 import {DOCUMENT, Location} from '@angular/common';
 import {HttpErrorResponse} from '@angular/common/http';
-import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, ElementRef, HostListener, Inject, inject, OnDestroy, OnInit, Renderer2, signal, ViewChild, WritableSignal} from '@angular/core';
+import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, Inject, inject, OnDestroy, OnInit, Renderer2, signal, ViewChild, WritableSignal} from '@angular/core';
 import {FormControl} from '@angular/forms';
-import {MatDialog} from '@angular/material/dialog';
+import {MatDialog, MatDialogModule} from '@angular/material/dialog';
 import {MatPaginatorIntl} from '@angular/material/paginator';
 import {MatDrawer} from '@angular/material/sidenav';
 import {MatSnackBar} from '@angular/material/snack-bar';
@@ -41,7 +41,6 @@ import {EventService} from '../../core/services/event.service';
 import {FeatureFlagService} from '../../core/services/feature-flag.service';
 import {SessionService} from '../../core/services/session.service';
 import {TraceService} from '../../core/services/trace.service';
-import {User} from '../../core/services/user.service';
 import {VideoService} from '../../core/services/video.service';
 import {WebSocketService} from '../../core/services/websocket.service';
 import {ResizableDrawerDirective} from '../../directives/resizable-drawer.directive';
@@ -54,6 +53,7 @@ import {PendingEventDialogComponent} from '../pending-event-dialog/pending-event
 import {DeleteSessionDialogComponent, DeleteSessionDialogData,} from '../session-tab/delete-session-dialog/delete-session-dialog.component';
 import {SessionTabComponent} from '../session-tab/session-tab.component';
 import {ViewImageDialogComponent} from '../view-image-dialog/view-image-dialog.component';
+import { User } from '../../core/services/user.service';
 
 const ROOT_AGENT = 'root_agent';
 
@@ -136,11 +136,10 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   functionCallEventId = '';
   redirectUri = URLUtil.getBaseUrlWithoutPath();
   showSidePanel = true;
-  useSse = false;
+  useSse = true; // always use streaming
   currentSessionState = {};
   root_agent = ROOT_AGENT;
   updatedSessionState = signal(null);
-  newSessionTrigger = signal(0);
   private readonly messagesSubject = new BehaviorSubject<any[]>([]);
   private readonly streamingTextMessageSubject =
     new BehaviorSubject<any | null>(null);
@@ -228,12 +227,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   bottomPanelVisible = false;
   hoveredEventMessageIndices: number[] = [];
 
-  // Signals do agent service
-  customRunResponse = this.agentService.customRunResponse;
-  customRunLoading = this.agentService.customRunLoading;
-  customRunError = this.agentService.customRunError;
-  hasCustomRunResponse = this.agentService.hasCustomRunResponse;
-
   constructor(
       private sanitizer: DomSanitizer,
       private sessionService: SessionService,
@@ -250,17 +243,9 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       private location: Location,
       private renderer: Renderer2,
       @Inject(DOCUMENT) private document: Document,
-  ) {
-    effect(() => {
-      const trigger = this.newSessionTrigger();
-      if (trigger > 0) {
-        this.performNewSession();
-      }
-    });
-  }
+  ) {}
 
-  ngOnInit() {
-    this.enableSseIndicator.set(this.useSse);
+  ngOnInit(): void {
     this.syncSelectedAppFromUrl();
     this.updateSelectedAppUrl();
 
@@ -294,11 +279,9 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
       if (isLoading) {
         if (!lastMessage?.isLoading && !this.streamingTextMessage) {
-          const loadingMessage = { role: 'bot', isLoading: true };
-          this.messages.push(loadingMessage);
+          this.messages.push({ role: 'bot', isLoading: true });
           this.messagesSubject.next(this.messages);
-          this.changeDetectorRef.detectChanges();
-        } 
+        }
       } else if (lastMessage?.isLoading && !isModelThinking) {
         this.messages.pop();
         this.messagesSubject.next(this.messages);
@@ -336,12 +319,10 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
   scrollToBottom() {
     setTimeout(() => {
-      if (this.scrollContainer?.nativeElement) {
-        this.scrollContainer.nativeElement.scrollTo({
-          top: this.scrollContainer.nativeElement.scrollHeight,
-          behavior: 'smooth',
-        });
-      }
+      this.scrollContainer.nativeElement.scrollTo({
+        top: this.scrollContainer.nativeElement.scrollHeight,
+        behavior: 'smooth',
+      });
     });
   }
 
@@ -392,10 +373,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe((res) => {
         this.currentSessionState = res.state;
         this.sessionId = res.id;
-        
-        if (this.sessionTab) {
-          this.sessionTab.refreshSession();
-        }
+        this.sessionTab.refreshSession();
 
         this.isSessionUrlEnabledObs.subscribe((enabled) => {
           if (enabled) {
@@ -405,8 +383,33 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
+  /**
+   * Handle user selection from the users tab
+   */
+  protected onUserSelected(user: User) {
+    console.log('User selected:', user);
+    if (user && user.id) {
+      this.user = user;
+    }
+
+    // clicking on some user should unselected it
+    // if (this.user && this.user.id === user.id) {
+    //   console.log("Unselecting user:", user);
+    //   this.user = null;
+    // }
+  }
+
+  /**
+   * Handle user reload from the users tab
+   */
+  protected onUserReloaded(user: User) {
+    console.log('User reloaded:', user);
+    // You can implement specific logic for when a user is reloaded
+    // For example, you might want to refresh user details, update UI, etc.
+  }
+
   async sendMessage(event: Event) {
-    if (this.messages.length === 0 && this.scrollContainer?.nativeElement) {
+    if (this.messages.length === 0) {
       this.scrollContainer.nativeElement.addEventListener('wheel', () => {
         this.scrollInterruptedSubject.next(true);
       });
@@ -425,9 +428,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
     }
-
-    // Limpar signals anteriores antes de enviar nova mensagem
-    this.agentService.clearCustomRunSignals();
 
     // Add user message
     if (!!this.userInput.trim()) {
@@ -460,7 +460,46 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedFiles = [];
     let index = this.eventMessageIndexArray.length - 1;
     this.streamingTextMessage = null;
-
+    // this.agentService.customRun(req).subscribe({
+    //   next: async (chunk) => {
+    //     if (chunk.startsWith('{"error"')) {
+    //       this.openSnackBar(chunk, 'OK');
+    //       return;
+    //     }
+    //     const chunkJson = JSON.parse(chunk);
+    //     if (chunkJson.error) {
+    //       this.openSnackBar(chunkJson.error, 'OK');
+    //       return;
+    //     }
+    //     if (chunkJson.content) {
+    //       for (let part of chunkJson.content.parts) {
+    //         index += 1;
+    //         this.processPart(chunkJson, part, index);
+    //         this.traceService.setEventData(this.eventData);
+    //       }
+    //     } else if (chunkJson.errorMessage) {
+    //       this.processErrorMessage(chunkJson, index)
+    //     }
+    //     this.changeDetectorRef.detectChanges();
+    //   },
+    //   error: (err) => console.error('SSE error:', err),
+    //   complete: () => {
+    //     this.streamingTextMessage = null;
+    //     this.sessionTab.reloadSession(this.sessionId);
+    //     this.eventService.getTrace(this.sessionId)
+    //         .pipe(catchError((error) => {
+    //           if (error.status === 404) {
+    //             return of(null);
+    //           }
+    //           return of([]);
+    //         }))
+    //         .subscribe(res => {
+    //           this.traceData = res;
+    //           this.changeDetectorRef.detectChanges();
+    //         });
+    //     this.traceService.setMessages(this.messages);
+    //   },
+    // });
     this.agentService.customRun(req).subscribe({
       next: async (chunk) => {
         if (chunk.startsWith('{"error"')) {
@@ -485,13 +524,8 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: (err) => console.error('SSE error:', err),
       complete: () => {
-        if (this.streamingTextMessage) {
-          this.streamingTextMessageSubject.next(null);
-          this.streamingTextMessage = null;
-        }
-        if (this.sessionTab) {
-          this.sessionTab.reloadSession(this.sessionId);
-        }
+        this.streamingTextMessage = null;
+        this.sessionTab.reloadSession(this.sessionId);
         this.eventService.getTrace(this.sessionId)
             .pipe(catchError((error) => {
               if (error.status === 404) {
@@ -506,72 +540,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
         this.traceService.setMessages(this.messages);
       },
     });
-
-    // this.agentService.customRun(req).subscribe({
-    //   next: (responseText) => {
-    //     if (!responseText || typeof responseText !== 'string') {
-    //       this.openSnackBar('Resposta inválida do servidor.', 'OK');
-    //       return;
-    //     }
-
-    //   //   const chunkJson = {
-    //   //     text: responseText,   // novo formato 
-    //   //     direto
-    //   //     thought: false        // opcional, se 
-    //   //     você usa para estilo
-    //   //   };
-    
-    //   //   index += 1;
-    //   //   this.processPart(chunkJson, 
-    //   //   responseText, index);
-    //   //   this.traceService.setEventData(this.
-    //   //   eventData);
-    //   //   this.changeDetectorRef.detectChanges();
-    //   // },
-
-    //     // Criar mensagem direta ao invés de usar processPart
-    //     const botMessage = {
-    //       role: 'bot',
-    //       text: responseText,
-    //       thought: false
-    //     };
-        
-    //     // Adicionar diretamente ao array de mensagens
-    //     this.messages.push(botMessage);
-    //     this.messagesSubject.next(this.messages);
-        
-    //     // Forçar detecção de mudanças
-    //     this.changeDetectorRef.detectChanges();
-    //   },
-
-    //   error: (err) => {
-    //     console.error('Erro ao executar customRun:', err);
-    //     this.openSnackBar('Erro ao executar a requisição.', 'OK');
-    //   },
-
-    //   complete: () => {
-    //     this.streamingTextMessage = null;
-    //     if (this.sessionTab) {
-    //       this.sessionTab.reloadSession(this.sessionId);
-    //     }
-
-    //     this.eventService.getTrace(this.sessionId)
-    //       .pipe(
-    //         catchError((error) => {
-    //           if (error.status === 404) return of(null);
-    //           return of([]);
-    //         })
-    //       )
-    //       .subscribe(res => {
-    //         this.traceData = res;
-    //         this.changeDetectorRef.detectChanges();
-    //       });
-
-    //     this.traceService.setMessages(this.messages);
-    //   }
-    // });
-
-
     // Clear input
     this.userInput = '';
     this.updatedSessionState.set(null);
@@ -591,7 +559,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     if (part.text) {
       this.isModelThinkingSubject.next(false);
       const newChunk = part.text;
-      
       if (part.thought) {
         if (newChunk !== this.latestThought) {
           this.storeEvents(part, chunkJson, index);
@@ -619,19 +586,28 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         this.insertMessageBeforeLoadingMessage(this.streamingTextMessage);
-        this.streamingTextMessageSubject.next(this.streamingTextMessage);
+
+        if (!this.useSse) {
+          this.storeEvents(part, chunkJson, index);
+          this.eventMessageIndexArray[index] = newChunk;
+          this.streamingTextMessage = null;
+          return;
+        }
       } else {
         if (renderedContent) {
           this.streamingTextMessage.renderedContent =
             chunkJson.groundingMetadata.searchEntryPoint.renderedContent;
         }
 
+        if (newChunk == this.streamingTextMessage.text) {
+          this.storeEvents(part, chunkJson, index);
+          this.eventMessageIndexArray[index] = newChunk;
+          this.streamingTextMessage = null;
+          return;
+        }
         this.streamingTextMessage.text += newChunk;
         this.streamingTextMessageSubject.next(this.streamingTextMessage);
       }
-      
-      this.storeEvents(part, chunkJson, index);
-      this.eventMessageIndexArray[index] = this.streamingTextMessage?.text || newChunk;
     } else if (!part.thought) {
       this.isModelThinkingSubject.next(false);
       this.storeEvents(part, chunkJson, index);
@@ -805,7 +781,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.messages.push(message);
     }
-    
     this.messagesSubject.next(this.messages);
   }
 
@@ -920,7 +895,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     let response: any[] = [];
-    // this.agentService.runSse(authResponse).subscribe({
+    // this.agentService.customRun(authResponse).subscribe({
     //   next: async (chunk) => {
     //     const chunkJson = JSON.parse(chunk);
     //     response.push(chunkJson);
@@ -935,11 +910,11 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
         const chunkJson = JSON.parse(chunk);
         response.push(chunkJson);
       },
-      error: (err) => console.error('SSE error:', err),
+      error: (err) => console.error('CUSTOM RUN error:', err),
       complete: () => {
         this.processRunSseResponse(response);
       },
-    });
+    }); 
   }
 
   private processRunSseResponse(response: any) {
@@ -1178,9 +1153,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   protected handleReturnToSession(event: boolean) {
-            if (this.sessionTab) {
-          this.sessionTab.getSession(this.sessionId);
-        }
+    this.sessionTab.getSession(this.sessionId);
     this.evalTab.resetEvalCase();
     this.isChatMode.set(true);
   }
@@ -1422,30 +1395,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentSessionState = session.state;
   }
 
-  /**
-   * Handle user selection from the users tab
-   */
-  protected onUserSelected(user: User) {
-    console.log('User selected:', user);
-    if (user && user.id) {
-      this.user = user;
-    }
-  }
-
-  /**
-   * Handle user reload from the users tab
-   */
-  protected onUserReloaded(user: User) {
-    console.log('User reloaded:', user);
-    // You can implement specific logic for when a user is reloaded
-    // For example, you might want to refresh user details, update UI, etc.
-  }
-
-  onNewSessionClick = () => {
-    this.newSessionTrigger.set(this.newSessionTrigger() + 1);
-  }
-
-  private performNewSession() {
+  onNewSessionClick() {
     this.createSession();
     this.eventData.clear();
     this.eventMessageIndexArray = [];
@@ -1513,11 +1463,11 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
   protected deleteSession(session: string) {
     const dialogData: DeleteSessionDialogData = {
-      title: 'Deletar sessão',
+      title: 'Confirm delete',
       message:
-        `Tem certeza que deseja deletar a sessão ${this.sessionId}?`,
-      confirmButtonText: 'Deletar',
-      cancelButtonText: 'Cancelar',
+        `Are you sure you want to delete this session ${this.sessionId}?`,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
     };
 
     const dialogRef = this.dialog.open(DeleteSessionDialogComponent, {
@@ -1529,13 +1479,11 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       if (result) {
         this.sessionService.deleteSession(this.userId, this.appName, session)
           .subscribe((res) => {
-            if (this.sessionTab) {
-              const nextSession = this.sessionTab.refreshSession(session);
-              if (nextSession) {
-                this.sessionTab.getSession(nextSession.id);
-              } else {
-                window.location.reload();
-              }
+            const nextSession = this.sessionTab.refreshSession(session);
+            if (nextSession) {
+              this.sessionTab.getSession(nextSession.id);
+            } else {
+              window.location.reload();
             }
           });
       } else {
@@ -1737,9 +1685,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
                     sessionData.userId, sessionData.appName, sessionData.events)
                 .subscribe((res) => {
                   this.openSnackBar('Session imported', 'OK');
-                  if (this.sessionTab) {
-                    this.sessionTab.refreshSession();
-                  }
+                  this.sessionTab.refreshSession();
                 });
           } catch (error) {
             this.openSnackBar('Error parsing session file', 'OK');

@@ -82,6 +82,9 @@ export class UsersTabComponent implements OnInit {
 
   selectUser(user: User) {
     this.selectedUserId = user.id;
+    // if (!!this.selectedUserId && this.selectedUserId === user.id) {
+    //   this.selectedUserId = '';
+    // }
     this.userSelected.emit(user);
   }
 

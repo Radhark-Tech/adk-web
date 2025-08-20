@@ -30,19 +30,6 @@ export class AgentService {
   currentApp = this._currentApp.asObservable();
   private isLoading = new BehaviorSubject<boolean>(false);
 
-  // Signals para customRun
-  private customRunResponseSignal = signal<string>('');
-  private customRunLoadingSignal = signal<boolean>(false);
-  private customRunErrorSignal = signal<string | null>(null);
-
-  // Readonly signals para componentes
-  customRunResponse = this.customRunResponseSignal.asReadonly();
-  customRunLoading = this.customRunLoadingSignal.asReadonly();
-  customRunError = this.customRunErrorSignal.asReadonly();
-
-  // Computed signal para verificar se há resposta
-  hasCustomRunResponse = computed(() => this.customRunResponseSignal().length > 0);
-
   constructor(
     private http: HttpClient,
     private zone: NgZone,
@@ -176,13 +163,6 @@ export class AgentService {
           self.zone.run(() => observer.error(err));
         });
     });
-  }
-
-  // Método para limpar os signals do customRun
-  clearCustomRunSignals() {
-    this.customRunResponseSignal.set('');
-    this.customRunErrorSignal.set(null);
-    this.customRunLoadingSignal.set(false);
   }
 
   listApps(): Observable<string[]> {
