@@ -121,14 +121,7 @@ export class AgentService {
 
   customRun(req: AgentRunRequest) {
     const url = this.apiServerDomain + `/custom_run`;
-    
-    // Limpar signals automaticamente ao iniciar nova requisição
-    this.clearCustomRunSignals();
-    
-    // Definir loading como true ao iniciar a requisição (tanto global quanto local)
     this.isLoading.next(true);
-    this.customRunLoadingSignal.set(true);
-    
     return new Observable<string>((observer) => {
       const self = this;
       fetch(url, {
@@ -146,35 +139,35 @@ export class AgentService {
 
           const read = () => {
             reader?.read()
-              .then(({ done, value }) => {
-                this.isLoading.next(true);
-                if (done) {
-                  this.isLoading.next(false);
-                  return observer.complete();
-                }
-                const chunk = decoder.decode(value, { stream: true });
-                lastData += chunk;
-                try {
-                  const lines = lastData.split(/\r?\n/).filter(
-                    (line) => line.startsWith('data:'));
-                  lines.forEach((line) => {
-                    const data = line.replace(/^data:\s*/, '');
-                    JSON.parse(data);
-                    self.zone.run(() => observer.next(data));
-                  });
-                  lastData = '';
-                } catch (e) {
-                  // the data is not a valid json, it could be an incomplete
-                  // chunk. we ignore it and wait for the next chunk.
-                  if (e instanceof SyntaxError) {
-                    read();
+                .then(({done, value}) => {
+                  this.isLoading.next(true);
+                  if (done) {
+                    this.isLoading.next(false);
+                    return observer.complete();
                   }
-                }
-                read();  // Read the next chunk
-              })
-              .catch((err) => {
-                self.zone.run(() => observer.error(err));
-              });
+                  const chunk = decoder.decode(value, {stream: true});
+                  lastData += chunk;
+                  try {
+                    const lines = lastData.split(/\r?\n/).filter(
+                        (line) => line.startsWith('data:'));
+                    lines.forEach((line) => {
+                      const data = line.replace(/^data:\s*/, '');
+                      JSON.parse(data);
+                      self.zone.run(() => observer.next(data));
+                    });
+                    lastData = '';
+                  } catch (e) {
+                    // the data is not a valid json, it could be an incomplete
+                    // chunk. we ignore it and wait for the next chunk.
+                    if (e instanceof SyntaxError) {
+                      read();
+                    }
+                  }
+                  read();  // Read the next chunk
+                })
+                .catch((err) => {
+                  self.zone.run(() => observer.error(err));
+                });
           };
 
           read();

@@ -586,7 +586,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     // Este método foi simplificado para usar a abordagem direta do customRun
     
     // IMPLEMENTAÇÃO ORIGINAL (COMENTADA PARA REVISÃO):
-    /*
     const renderedContent =
       chunkJson.groundingMetadata?.searchEntryPoint?.renderedContent;
 
@@ -650,7 +649,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.isModelThinkingSubject.next(true);
     }
-    */
     
     // NOTA: Este método não é mais usado na implementação atual do customRun
     // As mensagens são criadas diretamente no método sendMessage
@@ -711,7 +709,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     // A implementação original estava causando problemas com mensagens vazias
     
     // IMPLEMENTAÇÃO ORIGINAL (COMENTADA PARA REVISÃO):
-    /*
     if (e?.author) {
       this.createAgentIconColorClass(e.author);
     }
@@ -818,7 +815,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     if (Object.keys(part).length > 0) {
       this.insertMessageBeforeLoadingMessage(message);
     }
-    */
     
     // NOTA: Este método não é mais usado na implementação atual do customRun
     // As mensagens são criadas diretamente no método sendMessage
@@ -832,7 +828,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     // A implementação original estava causando problemas com mensagens vazias
     
     // IMPLEMENTAÇÃO ORIGINAL (COMENTADA PARA REVISÃO):
-    /*
     const lastMessage = this.messages[this.messages.length - 1];
     if (lastMessage?.isLoading) {
       this.messages.splice(this.messages.length - 1, 0, message);
@@ -841,7 +836,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     
     this.messagesSubject.next(this.messages);
-    */
     
     // NOTA: Este método não é mais usado na implementação atual do customRun
     // As mensagens são criadas diretamente no método sendMessage
@@ -960,7 +954,17 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     let response: any[] = [];
-    this.agentService.runSse(authResponse).subscribe({
+    // this.agentService.runSse(authResponse).subscribe({
+    //   next: async (chunk) => {
+    //     const chunkJson = JSON.parse(chunk);
+    //     response.push(chunkJson);
+    //   },
+    //   error: (err) => console.error('SSE error:', err),
+    //   complete: () => {
+    //     this.processRunSseResponse(response);
+    //   },
+    // });
+    this.agentService.customRun(authResponse).subscribe({
       next: async (chunk) => {
         const chunkJson = JSON.parse(chunk);
         response.push(chunkJson);
