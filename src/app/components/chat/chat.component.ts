@@ -485,10 +485,13 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: (err) => console.error('SSE error:', err),
       complete: () => {
-        this.streamingTextMessage = null;
-                if (this.sessionTab) {
-              this.sessionTab.reloadSession(this.sessionId);
-            }
+        if (this.streamingTextMessage) {
+          this.streamingTextMessageSubject.next(null);
+          this.streamingTextMessage = null;
+        }
+        if (this.sessionTab) {
+          this.sessionTab.reloadSession(this.sessionId);
+        }
         this.eventService.getTrace(this.sessionId)
             .pipe(catchError((error) => {
               if (error.status === 404) {
@@ -582,16 +585,13 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private processPart(chunkJson: any, part: any, index: number) {
-    // IMPLEMENTAÇÃO ATUAL (FUNCIONANDO):
-    // Este método foi simplificado para usar a abordagem direta do customRun
-    
-    // IMPLEMENTAÇÃO ORIGINAL (COMENTADA PARA REVISÃO):
     const renderedContent =
       chunkJson.groundingMetadata?.searchEntryPoint?.renderedContent;
 
     if (part.text) {
       this.isModelThinkingSubject.next(false);
       const newChunk = part.text;
+      
       if (part.thought) {
         if (newChunk !== this.latestThought) {
           this.storeEvents(part, chunkJson, index);
@@ -619,28 +619,19 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         this.insertMessageBeforeLoadingMessage(this.streamingTextMessage);
-
-        if (!this.useSse) {
-          this.storeEvents(part, chunkJson, index);
-          this.eventMessageIndexArray[index] = newChunk;
-          this.streamingTextMessage = null;
-          return;
-        }
+        this.streamingTextMessageSubject.next(this.streamingTextMessage);
       } else {
         if (renderedContent) {
           this.streamingTextMessage.renderedContent =
             chunkJson.groundingMetadata.searchEntryPoint.renderedContent;
         }
 
-        if (newChunk == this.streamingTextMessage.text) {
-          this.storeEvents(part, chunkJson, index);
-          this.eventMessageIndexArray[index] = newChunk;
-          this.streamingTextMessage = null;
-          return;
-        }
         this.streamingTextMessage.text += newChunk;
         this.streamingTextMessageSubject.next(this.streamingTextMessage);
       }
+      
+      this.storeEvents(part, chunkJson, index);
+      this.eventMessageIndexArray[index] = this.streamingTextMessage?.text || newChunk;
     } else if (!part.thought) {
       this.isModelThinkingSubject.next(false);
       this.storeEvents(part, chunkJson, index);
@@ -649,11 +640,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.isModelThinkingSubject.next(true);
     }
-    
-    // NOTA: Este método não é mais usado na implementação atual do customRun
-    // As mensagens são criadas diretamente no método sendMessage
-    // Mantido para compatibilidade com outras funcionalidades que possam usar
-    console.warn('processPart chamado mas não implementado na versão atual');
   }
 
   async getUserMessageParts() {
@@ -704,11 +690,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   private storeMessage(
       part: any, e: any, index: number, role: string, invocationIndex?: number,
       additionalIndeces?: any) {
-    // IMPLEMENTAÇÃO ATUAL (FUNCIONANDO):
-    // Este método foi simplificado para usar a abordagem direta do customRun
-    // A implementação original estava causando problemas com mensagens vazias
-    
-    // IMPLEMENTAÇÃO ORIGINAL (COMENTADA PARA REVISÃO):
     if (e?.author) {
       this.createAgentIconColorClass(e.author);
     }
@@ -815,19 +796,9 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     if (Object.keys(part).length > 0) {
       this.insertMessageBeforeLoadingMessage(message);
     }
-    
-    // NOTA: Este método não é mais usado na implementação atual do customRun
-    // As mensagens são criadas diretamente no método sendMessage
-    // Mantido para compatibilidade com outras funcionalidades que possam usar
-    console.warn('storeMessage chamado mas não implementado na versão atual');
   }
 
   private insertMessageBeforeLoadingMessage(message: any) {
-    // IMPLEMENTAÇÃO ATUAL (FUNCIONANDO):
-    // Este método foi simplificado para usar a abordagem direta do customRun
-    // A implementação original estava causando problemas com mensagens vazias
-    
-    // IMPLEMENTAÇÃO ORIGINAL (COMENTADA PARA REVISÃO):
     const lastMessage = this.messages[this.messages.length - 1];
     if (lastMessage?.isLoading) {
       this.messages.splice(this.messages.length - 1, 0, message);
@@ -836,11 +807,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     
     this.messagesSubject.next(this.messages);
-    
-    // NOTA: Este método não é mais usado na implementação atual do customRun
-    // As mensagens são criadas diretamente no método sendMessage
-    // Mantido para compatibilidade com outras funcionalidades que possam usar
-    console.warn('insertMessageBeforeLoadingMessage chamado mas não implementado na versão atual');
   }
 
   private formatBase64Data(data: string, mimeType: string) {
