@@ -461,112 +461,112 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     let index = this.eventMessageIndexArray.length - 1;
     this.streamingTextMessage = null;
 
-    // this.agentService.runSse(req).subscribe({
-    //   next: async (chunk) => {
-    //     if (chunk.startsWith('{"error"')) {
-    //       this.openSnackBar(chunk, 'OK');
-    //       return;
-    //     }
-    //     const chunkJson = JSON.parse(chunk);
-    //     if (chunkJson.error) {
-    //       this.openSnackBar(chunkJson.error, 'OK');
-    //       return;
-    //     }
-    //     if (chunkJson.content) {
-    //       for (let part of chunkJson.content.parts) {
-    //         index += 1;
-    //         this.processPart(chunkJson, part, index);
-    //         this.traceService.setEventData(this.eventData);
-    //       }
-    //     } else if (chunkJson.errorMessage) {
-    //       this.processErrorMessage(chunkJson, index)
-    //     }
-    //     this.changeDetectorRef.detectChanges();
-    //   },
-    //   error: (err) => console.error('SSE error:', err),
-    //   complete: () => {
-    //     this.streamingTextMessage = null;
-            //     if (this.sessionTab) {
-        //       this.sessionTab.reloadSession(this.sessionId);
-        //     }
-    //     this.eventService.getTrace(this.sessionId)
-    //         .pipe(catchError((error) => {
-    //           if (error.status === 404) {
-    //             return of(null);
-    //           }
-    //           return of([]);
-    //         }))
-    //         .subscribe(res => {
-    //           this.traceData = res;
-    //           this.changeDetectorRef.detectChanges();
-    //         });
-    //     this.traceService.setMessages(this.messages);
-    //   },
-    // });
-
     this.agentService.customRun(req).subscribe({
-      next: (responseText) => {
-        if (!responseText || typeof responseText !== 'string') {
-          this.openSnackBar('Resposta inválida do servidor.', 'OK');
+      next: async (chunk) => {
+        if (chunk.startsWith('{"error"')) {
+          this.openSnackBar(chunk, 'OK');
           return;
         }
-
-      //   const chunkJson = {
-      //     text: responseText,   // novo formato 
-      //     direto
-      //     thought: false        // opcional, se 
-      //     você usa para estilo
-      //   };
-    
-      //   index += 1;
-      //   this.processPart(chunkJson, 
-      //   responseText, index);
-      //   this.traceService.setEventData(this.
-      //   eventData);
-      //   this.changeDetectorRef.detectChanges();
-      // },
-
-        // Criar mensagem direta ao invés de usar processPart
-        const botMessage = {
-          role: 'bot',
-          text: responseText,
-          thought: false
-        };
-        
-        // Adicionar diretamente ao array de mensagens
-        this.messages.push(botMessage);
-        this.messagesSubject.next(this.messages);
-        
-        // Forçar detecção de mudanças
+        const chunkJson = JSON.parse(chunk);
+        if (chunkJson.error) {
+          this.openSnackBar(chunkJson.error, 'OK');
+          return;
+        }
+        if (chunkJson.content) {
+          for (let part of chunkJson.content.parts) {
+            index += 1;
+            this.processPart(chunkJson, part, index);
+            this.traceService.setEventData(this.eventData);
+          }
+        } else if (chunkJson.errorMessage) {
+          this.processErrorMessage(chunkJson, index)
+        }
         this.changeDetectorRef.detectChanges();
       },
-
-      error: (err) => {
-        console.error('Erro ao executar customRun:', err);
-        this.openSnackBar('Erro ao executar a requisição.', 'OK');
-      },
-
+      error: (err) => console.error('SSE error:', err),
       complete: () => {
         this.streamingTextMessage = null;
-        if (this.sessionTab) {
-          this.sessionTab.reloadSession(this.sessionId);
-        }
-
+                if (this.sessionTab) {
+              this.sessionTab.reloadSession(this.sessionId);
+            }
         this.eventService.getTrace(this.sessionId)
-          .pipe(
-            catchError((error) => {
-              if (error.status === 404) return of(null);
+            .pipe(catchError((error) => {
+              if (error.status === 404) {
+                return of(null);
+              }
               return of([]);
-            })
-          )
-          .subscribe(res => {
-            this.traceData = res;
-            this.changeDetectorRef.detectChanges();
-          });
-
+            }))
+            .subscribe(res => {
+              this.traceData = res;
+              this.changeDetectorRef.detectChanges();
+            });
         this.traceService.setMessages(this.messages);
-      }
+      },
     });
+
+    // this.agentService.customRun(req).subscribe({
+    //   next: (responseText) => {
+    //     if (!responseText || typeof responseText !== 'string') {
+    //       this.openSnackBar('Resposta inválida do servidor.', 'OK');
+    //       return;
+    //     }
+
+    //   //   const chunkJson = {
+    //   //     text: responseText,   // novo formato 
+    //   //     direto
+    //   //     thought: false        // opcional, se 
+    //   //     você usa para estilo
+    //   //   };
+    
+    //   //   index += 1;
+    //   //   this.processPart(chunkJson, 
+    //   //   responseText, index);
+    //   //   this.traceService.setEventData(this.
+    //   //   eventData);
+    //   //   this.changeDetectorRef.detectChanges();
+    //   // },
+
+    //     // Criar mensagem direta ao invés de usar processPart
+    //     const botMessage = {
+    //       role: 'bot',
+    //       text: responseText,
+    //       thought: false
+    //     };
+        
+    //     // Adicionar diretamente ao array de mensagens
+    //     this.messages.push(botMessage);
+    //     this.messagesSubject.next(this.messages);
+        
+    //     // Forçar detecção de mudanças
+    //     this.changeDetectorRef.detectChanges();
+    //   },
+
+    //   error: (err) => {
+    //     console.error('Erro ao executar customRun:', err);
+    //     this.openSnackBar('Erro ao executar a requisição.', 'OK');
+    //   },
+
+    //   complete: () => {
+    //     this.streamingTextMessage = null;
+    //     if (this.sessionTab) {
+    //       this.sessionTab.reloadSession(this.sessionId);
+    //     }
+
+    //     this.eventService.getTrace(this.sessionId)
+    //       .pipe(
+    //         catchError((error) => {
+    //           if (error.status === 404) return of(null);
+    //           return of([]);
+    //         })
+    //       )
+    //       .subscribe(res => {
+    //         this.traceData = res;
+    //         this.changeDetectorRef.detectChanges();
+    //       });
+
+    //     this.traceService.setMessages(this.messages);
+    //   }
+    // });
 
 
     // Clear input

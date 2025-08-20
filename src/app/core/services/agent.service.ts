@@ -130,34 +130,57 @@ export class AgentService {
     this.customRunLoadingSignal.set(true);
     
     return new Observable<string>((observer) => {
+      const self = this;
       fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'text/plain',
+          'Accept': 'text/event-stream',
         },
         body: JSON.stringify(req),
       })
         .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.text();
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let lastData = '';
+
+          const read = () => {
+            reader?.read()
+              .then(({ done, value }) => {
+                this.isLoading.next(true);
+                if (done) {
+                  this.isLoading.next(false);
+                  return observer.complete();
+                }
+                const chunk = decoder.decode(value, { stream: true });
+                lastData += chunk;
+                try {
+                  const lines = lastData.split(/\r?\n/).filter(
+                    (line) => line.startsWith('data:'));
+                  lines.forEach((line) => {
+                    const data = line.replace(/^data:\s*/, '');
+                    JSON.parse(data);
+                    self.zone.run(() => observer.next(data));
+                  });
+                  lastData = '';
+                } catch (e) {
+                  // the data is not a valid json, it could be an incomplete
+                  // chunk. we ignore it and wait for the next chunk.
+                  if (e instanceof SyntaxError) {
+                    read();
+                  }
+                }
+                read();  // Read the next chunk
+              })
+              .catch((err) => {
+                self.zone.run(() => observer.error(err));
+              });
+          };
+
+          read();
         })
-        .then((text) => {
-          // Definir loading como false ao completar (tanto global quanto local)
-          this.isLoading.next(false);
-          this.customRunLoadingSignal.set(false);
-          this.customRunResponseSignal.set(text);
-          observer.next(text);
-          observer.complete();
-        })
-        .catch((error) => {
-          // Definir loading como false em caso de erro (tanto global quanto local)
-          this.isLoading.next(false);
-          this.customRunLoadingSignal.set(false);
-          this.customRunErrorSignal.set(error.message);
-          observer.error(error);
+        .catch((err) => {
+          self.zone.run(() => observer.error(err));
         });
     });
   }
