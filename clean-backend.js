@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-const setup = process.env.SETUP;
-
 const fs = require('fs');
-const path = `./src/assets/config/runtime-config-${setup}.json`;
+const path = `./src/assets/config/runtime-config.json`;
 
 if (fs.existsSync(path)) {
     // fs.writeFileSync(path, JSON.stringify({ backendUrl: '' }, null, 2));

@@ -48,8 +48,7 @@ window.addEventListener("message", (event) => {
   }
 });
 
-const path = `./assets/config/runtime-config-${process.env["SETUP"]}.json`;
-fetch(path)
+fetch(`./assets/config/runtime-config.json`)
   .then((response) => response.json())
   .then((config) => {
     (window as any)['runtimeConfig'] = config;
