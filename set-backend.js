@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+const setup = process.env.SETUP;
+
 const fs = require('fs');
-const path = './src/assets/config/runtime-config.js';
-// const path = './src/assets/config/runtime-config.json';
+const path = `./src/assets/config/runtime-config-${setup}.js`;
 
 const backendUrl = process.env.npm_config_backend;
 
