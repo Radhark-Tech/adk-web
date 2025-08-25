@@ -15,11 +15,13 @@
  */
 
 const fs = require('fs');
-const path = './src/assets/config/runtime-config.json';
+const path = `./src/assets/config/runtime-config.json`;
 
 if (fs.existsSync(path)) {
+    // fs.writeFileSync(path, JSON.stringify({ backendUrl: '' }, null, 2));
+    // console.log('Cleaned runtime-config.json');
     fs.writeFileSync(path, JSON.stringify({ backendUrl: '' }, null, 2));
-    console.log('Cleaned runtime-config.json');
+    console.log('Cleaned runtime-config.js');
 } else {
-    console.log('runtime-config.json does not exist. Nothing to clean.');
+    console.log('runtime-config.js does not exist. Nothing to clean.');
 }

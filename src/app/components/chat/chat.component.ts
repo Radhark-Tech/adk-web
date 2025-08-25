@@ -41,7 +41,6 @@ import {EventService} from '../../core/services/event.service';
 import {FeatureFlagService} from '../../core/services/feature-flag.service';
 import {SessionService} from '../../core/services/session.service';
 import {TraceService} from '../../core/services/trace.service';
-import {User} from '../../core/services/user.service';
 import {VideoService} from '../../core/services/video.service';
 import {WebSocketService} from '../../core/services/websocket.service';
 import {ResizableDrawerDirective} from '../../directives/resizable-drawer.directive';
@@ -54,6 +53,7 @@ import {PendingEventDialogComponent} from '../pending-event-dialog/pending-event
 import {DeleteSessionDialogComponent, DeleteSessionDialogData,} from '../session-tab/delete-session-dialog/delete-session-dialog.component';
 import {SessionTabComponent} from '../session-tab/session-tab.component';
 import {ViewImageDialogComponent} from '../view-image-dialog/view-image-dialog.component';
+import { User } from '../../core/services/user.service';
 
 const ROOT_AGENT = 'root_agent';
 
@@ -136,7 +136,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   functionCallEventId = '';
   redirectUri = URLUtil.getBaseUrlWithoutPath();
   showSidePanel = true;
-  useSse = false;
+  useSse = true; // always use streaming
   currentSessionState = {};
   root_agent = ROOT_AGENT;
   updatedSessionState = signal(null);
@@ -383,6 +383,31 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
+  /**
+   * Handle user selection from the users tab
+   */
+  protected onUserSelected(user: User) {
+    console.log('User selected:', user);
+    if (user && user.id) {
+      this.user = user;
+    }
+
+    // clicking on some user should unselected it
+    // if (this.user && this.user.id === user.id) {
+    //   console.log("Unselecting user:", user);
+    //   this.user = null;
+    // }
+  }
+
+  /**
+   * Handle user reload from the users tab
+   */
+  protected onUserReloaded(user: User) {
+    console.log('User reloaded:', user);
+    // You can implement specific logic for when a user is reloaded
+    // For example, you might want to refresh user details, update UI, etc.
+  }
+
   async sendMessage(event: Event) {
     if (this.messages.length === 0) {
       this.scrollContainer.nativeElement.addEventListener('wheel', () => {
@@ -435,8 +460,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedFiles = [];
     let index = this.eventMessageIndexArray.length - 1;
     this.streamingTextMessage = null;
-
-    // this.agentService.runSse(req).subscribe({
+    // this.agentService.customRun(req).subscribe({
     //   next: async (chunk) => {
     //     if (chunk.startsWith('{"error"')) {
     //       this.openSnackBar(chunk, 'OK');
@@ -476,51 +500,46 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     //     this.traceService.setMessages(this.messages);
     //   },
     // });
-
     this.agentService.customRun(req).subscribe({
-  next: (responseText) => {
-    if (!responseText || typeof responseText !== 'string') {
-      this.openSnackBar('Resposta inválida do servidor.', 'OK');
-      return;
-    }
-
-    const chunkJson = {
-      text: responseText,   // novo formato direto
-      thought: false        // opcional, se você usa para estilo
-    };
-
-    index += 1;
-    this.processPart(chunkJson, responseText, index);
-    this.traceService.setEventData(this.eventData);
-    this.changeDetectorRef.detectChanges();
-  },
-
-  error: (err) => {
-    console.error('Erro ao executar customRun:', err);
-    this.openSnackBar('Erro ao executar a requisição.', 'OK');
-  },
-
-  complete: () => {
-    this.streamingTextMessage = null;
-    this.sessionTab.reloadSession(this.sessionId);
-
-    this.eventService.getTrace(this.sessionId)
-      .pipe(
-        catchError((error) => {
-          if (error.status === 404) return of(null);
-          return of([]);
-        })
-      )
-      .subscribe(res => {
-        this.traceData = res;
+      next: async (chunk) => {
+        if (chunk.startsWith('{"error"')) {
+          this.openSnackBar(chunk, 'OK');
+          return;
+        }
+        const chunkJson = JSON.parse(chunk);
+        if (chunkJson.error) {
+          this.openSnackBar(chunkJson.error, 'OK');
+          return;
+        }
+        if (chunkJson.content) {
+          for (let part of chunkJson.content.parts) {
+            index += 1;
+            this.processPart(chunkJson, part, index);
+            this.traceService.setEventData(this.eventData);
+          }
+        } else if (chunkJson.errorMessage) {
+          this.processErrorMessage(chunkJson, index)
+        }
         this.changeDetectorRef.detectChanges();
-      });
-
-    this.traceService.setMessages(this.messages);
-  }
-});
-
-
+      },
+      error: (err) => console.error('SSE error:', err),
+      complete: () => {
+        this.streamingTextMessage = null;
+        this.sessionTab.reloadSession(this.sessionId);
+        this.eventService.getTrace(this.sessionId)
+            .pipe(catchError((error) => {
+              if (error.status === 404) {
+                return of(null);
+              }
+              return of([]);
+            }))
+            .subscribe(res => {
+              this.traceData = res;
+              this.changeDetectorRef.detectChanges();
+            });
+        this.traceService.setMessages(this.messages);
+      },
+    });
     // Clear input
     this.userInput = '';
     this.updatedSessionState.set(null);
@@ -876,16 +895,26 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     let response: any[] = [];
-    this.agentService.runSse(authResponse).subscribe({
+    // this.agentService.customRun(authResponse).subscribe({
+    //   next: async (chunk) => {
+    //     const chunkJson = JSON.parse(chunk);
+    //     response.push(chunkJson);
+    //   },
+    //   error: (err) => console.error('SSE error:', err),
+    //   complete: () => {
+    //     this.processRunSseResponse(response);
+    //   },
+    // });
+    this.agentService.customRun(authResponse).subscribe({
       next: async (chunk) => {
         const chunkJson = JSON.parse(chunk);
         response.push(chunkJson);
       },
-      error: (err) => console.error('SSE error:', err),
+      error: (err) => console.error('CUSTOM RUN error:', err),
       complete: () => {
         this.processRunSseResponse(response);
       },
-    });
+    }); 
   }
 
   private processRunSseResponse(response: any) {
@@ -1364,25 +1393,6 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
 
   protected updateSessionState(session: Session) {
     this.currentSessionState = session.state;
-  }
-
-  /**
-   * Handle user selection from the users tab
-   */
-  protected onUserSelected(user: User) {
-    console.log('User selected:', user);
-    if (user && user.id) {
-      this.user = user;
-    }
-  }
-
-  /**
-   * Handle user reload from the users tab
-   */
-  protected onUserReloaded(user: User) {
-    console.log('User reloaded:', user);
-    // You can implement specific logic for when a user is reloaded
-    // For example, you might want to refresh user details, update UI, etc.
   }
 
   onNewSessionClick() {

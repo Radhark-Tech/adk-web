@@ -30,6 +30,7 @@ export class UsersTabComponent implements OnInit {
   @Input() userId: string = '';
   @Input() appName: string = '';
   @Input() sessionId: string = '';
+  @Input() onNewSessionClick: (() => void) | undefined;
 
   @Output() readonly userSelected = new EventEmitter<User>();
   @Output() readonly userReloaded = new EventEmitter<User>();
@@ -81,7 +82,16 @@ export class UsersTabComponent implements OnInit {
 
   selectUser(user: User) {
     this.selectedUserId = user.id;
+    // if (!!this.selectedUserId && this.selectedUserId === user.id) {
+    //   this.selectedUserId = '';
+    // }
     this.userSelected.emit(user);
+  }
+
+  handleNewSessionClick() {
+    if (this.onNewSessionClick) {
+      this.onNewSessionClick();
+    }
   }
 
   protected getFormattedDate(dateString: string | undefined): string {
@@ -95,6 +105,27 @@ export class UsersTabComponent implements OnInit {
     } catch (error) {
       return 'Invalid date';
     }
+  }
+
+  protected getUserInitial(name: string | undefined): string {
+    if (!name || name.trim() === '') {
+      return '?';
+    }
+    
+    const trimmedName = name.trim();
+    const spaceIndex = trimmedName.indexOf(' ');
+    
+    if (spaceIndex === -1 || spaceIndex === trimmedName.length - 1) {
+      return trimmedName.charAt(0).toUpperCase();
+    }
+    
+    const firstCharAfterSpace = trimmedName.charAt(spaceIndex + 1);
+    
+    if (/[a-zA-Z]/.test(firstCharAfterSpace)) {
+      return firstCharAfterSpace.toUpperCase();
+    }
+    
+    return firstCharAfterSpace;
   }
 
   refreshUsers() {
@@ -117,7 +148,7 @@ export class UsersTabComponent implements OnInit {
         console.error('Error searching users:', error);
         this.errorMessage = 'Failed to search users. Please try again.';
         this.userList = [];
-      }
+      },
     });
   }
 }

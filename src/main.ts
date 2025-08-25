@@ -48,7 +48,7 @@ window.addEventListener("message", (event) => {
   }
 });
 
-fetch('./assets/config/runtime-config.json')
+fetch(`./assets/config/runtime-config.json`)
   .then((response) => response.json())
   .then((config) => {
     (window as any)['runtimeConfig'] = config;

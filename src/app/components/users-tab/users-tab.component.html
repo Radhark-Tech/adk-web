@@ -15,41 +15,30 @@
 -->
 
 <div class="users-wrapper">
-  <div class="users-header" style="margin: 16px 0; display: flex; justify-content: space-between; align-items: center;">
-    <div class="search-container">
-      <input
-        type="text"
-        placeholder="Search users..."
-        #searchInput
-        (input)="searchUsers(searchInput.value)"
-        class="user-search-input"
-        style="width: 100%; padding: 8px 12px; border: 1px solid #5f6368; border-radius: 8px; background-color: #fff; color: #000; font-size: 14px;"
-      />
-    </div>
-    <button
-      (click)="refreshUsers()"
-      class="refresh-button"
-      style="padding: 8px 16px; background: #1b1b1b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;"
-    >
-      Atualizar
-    </button>
-  </div>
-
   @if (loading) {
-    <div class="loading-container" style="text-align: center; padding: 20px; color: #9aa0a6; font-style: italic;">
+    <div class="loading-container">
       <p>Carregando usuários...</p>
     </div>
   }
 
   @if (errorMessage) {
-    <div class="error-container" style="color: #f28b82; padding: 16px; background-color: #3c1f1f; border: 1px solid #5f3838; border-radius: 8px; margin-bottom: 16px;">
+    <div class="error-container">
       {{ errorMessage }}
     </div>
   }
   
-  <div class="users-tab-container" style="margin-top: 16px;">
+  <div class="users-tab-container">
+    @if (onNewSessionClick) {
+      <div (click)="handleNewSessionClick()" class="toolbar-new-session">
+        <mat-icon>add</mat-icon>
+        Nova Sessão
+      </div>
+    }
+
+    <p class="users-tab-title">Carteira</p>
+
     @if (userList.length === 0 && !loading && !errorMessage) {
-      <div class="no-users" style="text-align: center; padding: 20px; color: #9aa0a6; background-color: #303030; border: 1px solid #5f6368; border-radius: 8px;">
+      <div class="no-users">
         Sem usuários encontrados.
       </div>
     } @else {
@@ -57,51 +46,12 @@
         <div
           (click)="selectUser(user)"
           [ngClass]="user.id === selectedUserId ? 'user-item current': 'user-item'"
-          style="padding: 12px; border: 1px solid #5f6368; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s ease; background-color: #303030;"
-          [style.background-color]="user.id === selectedUserId ? '#004a77' : '#303030'"
-          [style.border-color]="user.id === selectedUserId ? '#4285f4' : '#5f6368'"
         >
-          <div class="user-info">
-            <div class="user-name" style="color: #e8eaed; font-family: 'Google Sans', sans-serif; font-size: 16px; font-weight: 500; line-height: 20px; margin-bottom: 4px;">
-              {{ user.name || 'Unnamed User' }}
-            </div>
-            <div class="user-email" style="color: #9aa0a6; font-family: Roboto; font-size: 14px; font-weight: 400; line-height: 18px; margin-bottom: 8px;">
-              {{ user.email || 'No email provided' }}
-            </div>
-            <div class="user-details" style="color: #9aa0a6; font-family: Roboto; font-size: 12px; font-weight: 400; line-height: 16px; letter-spacing: 0.3px;">
-              @if (user.status) {
-                <div class="user-status" style="margin-bottom: 2px;">
-                  Status: {{ user.status }}
-                </div>
-              }
-              @if (user.role) {
-                <div class="user-role" style="margin-bottom: 2px;">
-                  Papel: {{ user.role }}
-                </div>
-              }
-              @if (user.last_login) {
-                <div class="user-last-login" style="margin-bottom: 2px;">
-                  Último login: {{ getFormattedDate(user.last_login) }}
-                </div>
-              } @else {
-                <div class="user-last-login" style="margin-bottom: 2px;">
-                  Último login: Nunca
-                </div>
-              }
-              @if (user.created_at) {
-                <div class="user-created" style="margin-bottom: 2px;">
-                  Criado Em: {{ getFormattedDate(user.created_at) }}
-                </div>
-              }
-              <!-- Display any additional domain-specific fields -->
-              @for (field of user | keyvalue; track field.key) {
-                @if (!['id', 'name', 'email', 'status', 'role', 'last_login', 'created_at'].includes(field.key) && field.value) {
-                  <div class="user-custom-field" style="margin-bottom: 2px;">
-                    {{ field.key }}: {{ field.value }}
-                  </div>
-                }
-              }
-            </div>
+          <div class="user-avatar" [ngClass]="'avatar-' + getUserInitial(user.name).toLowerCase()">
+            {{ getUserInitial(user.name) }}
+          </div>
+          <div class="user-name">
+            {{ user.name || 'Unnamed User' }}
           </div>
         </div>
       }
